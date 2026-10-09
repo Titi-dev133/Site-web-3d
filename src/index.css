@@ -117,7 +117,7 @@ h6 {
 /* NAVBAR STYLING */
 .navbar-container {
   position: sticky;
-  top: 34px;
+  top: 0;
   z-index: 1000;
   background: rgba(11, 14, 20, 0.92);
   backdrop-filter: blur(12px);
@@ -4716,7 +4716,7 @@ h6 {
 /* String Lights Garland (Guirlande Lumineuse) - Always visible dangling over the sticky Navbar */
 .xmas-string-lights {
   position: sticky;
-  top: 28px;
+  top: 0;
   z-index: 1015;
   display: flex;
   justify-content: space-around;
@@ -4777,18 +4777,16 @@ h6 {
   }
 }
 
-/* Floating Santa Sleigh in Sky - Descending gracefully on scroll */
+/* Floating Santa Sleigh in Sky - Fixed horizontal flight */
 .santa-sleigh-sky {
   position: fixed;
-  top: 50px;
+  top: 58px;
   left: 0;
   width: 100vw;
   pointer-events: none;
   z-index: 998;
   overflow: hidden;
-  height: 70px;
-  transition: transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
-  will-change: transform;
+  height: 60px;
 }
 
 .santa-sleigh-flyer {
