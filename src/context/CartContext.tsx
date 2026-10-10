@@ -136,16 +136,10 @@ const initialAddress: ShippingAddress = {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Purge any stale mock storage from previous runs
-  // Force clean startup: Purge old mock/saved lists so Admin panel opens with 0 lists
+  // Ensure storage persistence key is set without purging user data
   useEffect(() => {
     try {
-      const hasReset = localStorage.getItem('aether_v4_clean_start');
-      if (!hasReset) {
-        localStorage.removeItem('aether_user_christmas_lists');
-        localStorage.removeItem('aether_user_pseudo');
-        localStorage.removeItem('aether_cart');
-        localStorage.removeItem('aether_purchased_user_lists');
+      if (!localStorage.getItem('aether_v4_clean_start')) {
         localStorage.setItem('aether_v4_clean_start', 'true');
       }
     } catch (e) {
@@ -278,9 +272,92 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   });
 
+  // Helper to notify other tabs/windows in real time
+  const notifyBroadcastSync = (actionType: string) => {
+    try {
+      if ('BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('aether_lists_realtime');
+        bc.postMessage({ type: actionType, timestamp: Date.now() });
+        bc.close();
+      }
+    } catch {
+      // Ignore fallback
+    }
+  };
+
+  // Real-time synchronization across browser tabs & windows
+  useEffect(() => {
+    let bc: BroadcastChannel | null = null;
+
+    const reloadFromStorage = () => {
+      try {
+        const savedProds = localStorage.getItem('aether_dynamic_products');
+        if (savedProds) {
+          const parsed = JSON.parse(savedProds);
+          if (Array.isArray(parsed)) setProducts(parsed);
+        }
+
+        const savedLists = localStorage.getItem('aether_user_christmas_lists');
+        if (savedLists) {
+          const parsed = JSON.parse(savedLists);
+          if (typeof parsed === 'object' && parsed !== null) {
+            setUserLists(parsed);
+            const currentPseudo = localStorage.getItem('aether_user_pseudo') || '';
+            if (currentPseudo && parsed[currentPseudo]) {
+              setCart(parsed[currentPseudo]);
+            }
+          }
+        }
+
+        const savedPurchased = localStorage.getItem('aether_purchased_user_lists');
+        if (savedPurchased) setPurchasedUserLists(JSON.parse(savedPurchased));
+
+        const savedWishlist = localStorage.getItem('aether_wishlist');
+        if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+
+        const savedPromos = localStorage.getItem('aether_promo_codes');
+        if (savedPromos) setPromoCodes(JSON.parse(savedPromos));
+      } catch (err) {
+        console.error('Erreur de synchronisation temps réel:', err);
+      }
+    };
+
+    if ('BroadcastChannel' in window) {
+      try {
+        bc = new BroadcastChannel('aether_lists_realtime');
+        bc.onmessage = () => {
+          reloadFromStorage();
+        };
+      } catch {
+        // ignore
+      }
+    }
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (
+        !e.key ||
+        e.key === 'aether_user_christmas_lists' ||
+        e.key === 'aether_dynamic_products' ||
+        e.key === 'aether_purchased_user_lists' ||
+        e.key === 'aether_wishlist' ||
+        e.key === 'aether_promo_codes'
+      ) {
+        reloadFromStorage();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   // Persist Products
   useEffect(() => {
     localStorage.setItem('aether_dynamic_products', JSON.stringify(products));
+    notifyBroadcastSync('PRODUCTS_UPDATED');
   }, [products]);
 
   // Persist User Pseudo & Admin
@@ -305,18 +382,22 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return copy;
     });
     localStorage.setItem('aether_cart', JSON.stringify(cart));
+    notifyBroadcastSync('USER_LISTS_UPDATED');
   }, [cart, userPseudo]);
 
   useEffect(() => {
     localStorage.setItem('aether_purchased_user_lists', JSON.stringify(purchasedUserLists));
+    notifyBroadcastSync('PURCHASED_LISTS_UPDATED');
   }, [purchasedUserLists]);
 
   useEffect(() => {
     localStorage.setItem('aether_wishlist', JSON.stringify(wishlist));
+    notifyBroadcastSync('WISHLIST_UPDATED');
   }, [wishlist]);
 
   useEffect(() => {
     localStorage.setItem('aether_promo_codes', JSON.stringify(promoCodes));
+    notifyBroadcastSync('PROMO_CODES_UPDATED');
   }, [promoCodes]);
 
   const setUserPseudo = (newPseudo: string) => {

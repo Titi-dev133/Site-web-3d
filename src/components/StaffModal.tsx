@@ -102,6 +102,7 @@ export const StaffModal: React.FC = () => {
   const [name, setName] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [category, setCategory] = useState<Category>('Rangement & Organisation');
+  const [geometryType, setGeometryType] = useState<string>('quantumCore');
   const [price, setPrice] = useState<number | string>(29.99);
   const [originalPrice, setOriginalPrice] = useState<number | string>('');
   const [fulfillmentType, setFulfillmentType] = useState<FulfillmentType>('digital');
@@ -310,6 +311,7 @@ export const StaffModal: React.FC = () => {
     setName(p.name);
     setSubtitle(p.subtitle);
     setCategory(p.category);
+    setGeometryType((p as any).geometryType || 'quantumCore');
     setPrice(p.price);
     setOriginalPrice(p.originalPrice ?? '');
     setFulfillmentType(p.fulfillmentType);
@@ -333,6 +335,7 @@ export const StaffModal: React.FC = () => {
     setEditingProductId(null);
     setName('');
     setSubtitle('');
+    setGeometryType('quantumCore');
     setPrice(29.99);
     setOriginalPrice('');
     setDownloadUrl('');
@@ -362,6 +365,7 @@ export const StaffModal: React.FC = () => {
       name,
       subtitle: subtitle || 'Modèle 3D Téléchargeable',
       category,
+      geometryType,
       price: numPrice,
       originalPrice: validOrig,
       polygons: 25000,
@@ -705,6 +709,27 @@ export const StaffModal: React.FC = () => {
                 </select>
               </div>
 
+              <div className="form-group">
+                <label className="form-label">Forme 3D Interactive (Modèle)</label>
+                <select
+                  value={geometryType}
+                  onChange={(e) => setGeometryType(e.target.value)}
+                  className="form-input custom-select"
+                >
+                  <option value="quantumCore">Core Quantique Lumineux (quantumCore)</option>
+                  <option value="cyberMask">Masque Cyber Facetté (cyberMask)</option>
+                  <option value="holographicDrone">Drone Holographique (holographicDrone)</option>
+                  <option value="voronoiCrystal">Cristal Voronoï Modern (voronoiCrystal)</option>
+                  <option value="hypercube">Hypercube Tesseract (hypercube)</option>
+                  <option value="energyCell">Pod Énergétique Capsule (energyCell)</option>
+                  <option value="kineticRing">Anneaux Cinétiques (kineticRing)</option>
+                  <option value="mechArm">Bras Mécanique Robot (mechArm)</option>
+                  <option value="satellite">Satellite Spatial (satellite)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="form-row-2">
               <div className="form-group">
                 <div className="form-label-row">
                   <label className="form-label">Prix de Vente (€) *</label>
